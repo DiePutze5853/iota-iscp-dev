@@ -1,0 +1,5 @@
+[submodule "iscp/deps/wasp"]
+	path = iscp/deps/wasp
+	url = https://github.com/iotaledger/wasp
+	branch = master
+	
