@@ -1,0 +1,139 @@
+version: "3.4"
+
+services:
+  iota-sc-wasp-devnet:
+    build:
+      context: ./deps/wasp/
+      dockerfile: Dockerfile
+    container_name: iota-sc-wasp-devnet
+    networks:
+      - traefik-v2-proxy
+      - default
+    depends_on:
+      - iota-sc-goshimmer-devnet
+    volumes:
+      - wasp-db:/wasp/waspdb
+      - ./data/wasp.config.json:/etc/wasp_config.json
+    expose:
+      - "4000/udp" # Peering
+      - "5550/tcp" # Nano MSG
+      #- "7000/tcp" # Wasp Dashboard
+      #- "9090/tcp" # Wasp WebAPI
+    ports:
+      - "4000:4000/tcp" # Peering
+      - "5550:5550/tcp" # Nano MSG
+      #- "7000:7000/tcp" # Wasp Dashboard
+      #- "9090:9090/tcp" # Wasp WebAPI
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-v2-proxy
+      # Services
+      - traefik.http.services.wasp-dashboard.loadbalancer.server.port=7000
+      - traefik.http.services.wasp-webapi.loadbalancer.server.port=9090
+      # Routers
+      # Dashboard
+      - traefik.http.routers.wasp-dashboard.service=wasp-dashboard
+      - traefik.http.routers.wasp-dashboard.rule=Host(`${WASP_DASHBOARD_HOSTNAME:?-}`)
+      - traefik.http.routers.wasp-dashboard.middlewares=app_redirect
+      - traefik.http.routers.wasp-dashboard.entrypoints=websecure
+      - traefik.http.routers.wasp-dashboard.tls.certresolver=letsencrypt
+      #WebApi
+      - traefik.http.routers.wasp-webapi.service=wasp-webapi
+      - traefik.http.routers.wasp-webapi.rule=Host(`${WASP_API_HOSTNAME:?-}`)
+      - traefik.http.routers.wasp-webapi.middlewares=app_redirect
+      - traefik.http.routers.wasp-webapi.entrypoints=websecure
+      - traefik.http.routers.wasp-webapi.tls.certresolver=letsencrypt
+
+      # Middlewares
+      - traefik.http.middlewares.app_redirect.redirectregex.permanent=true
+
+  iota-sc-wasp-cli-devnet:
+    build:
+      context: ./deps/wasp-cli/
+      dockerfile: Dockerfile
+    container_name: iota-sc-wasp-cli-devnet
+    depends_on:
+      - iota-sc-wasp-devnet
+    networks:
+      - traefik-v2-proxy
+      - default
+    volumes:
+      - ./data/wasp-cli.json:/wasp-cli.json
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-v2-proxy
+      # Services
+      - traefik.http.services.wasp-evm.loadbalancer.server.port=8545
+      # Routers
+      #EVM
+      - traefik.http.routers.wasp-evm.service=wasp-evm
+      - traefik.http.routers.wasp-evm.rule=Host(`${WASP_EVM_HOSTNAME:?-}`)
+      - traefik.http.routers.wasp-evm.middlewares=app_redirect
+      - traefik.http.routers.wasp-evm.entrypoints=websecure
+      - traefik.http.routers.wasp-evm.tls.certresolver=letsencrypt
+
+      # Middlewares
+      - traefik.http.middlewares.app_redirect.redirectregex.permanent=true
+
+  iota-sc-goshimmer-devnet:
+    restart: always
+    container_name: iota-sc-goshimmer-devnet
+    image: lukasmoe/goshimmer:wasp-testnet-additions
+    stop_grace_period: 1m
+    networks:
+      - traefik-v2-proxy
+      - default
+    command: >
+      --config=/tmp/config.json
+      --database.directory=/tmp/devnetdb
+      --mana.snapshotResetTime=true
+      --node.seed=${GOSHIMMER_NODE_SEED:-base64:6ZeFxdcsORkmXWLmkopS20XWQuv0NhXmIyE5LNSMLA8=}
+      --messageLayer.snapshot.file=/tmp/snapshot.bin
+      --messageLayer.snapshot.genesisNode=
+      --messageLayer.startSynced=true
+    volumes:
+      - goshimmer-db:/tmp/devnetdb
+      - ./data/goshimmer.config.json:/tmp/config.json:ro
+      - ./data/snapshot.bin:/tmp/snapshot.bin:ro
+    ports:
+      - "5000:5000/tcp" # TX Stream
+      #- "8080:8080/tcp" # GoShimmer API
+      #- "8081:8081/tcp" # GoShimmer Dashboard
+      - "9000:9000/tcp" # Analysis Dashboard
+      #- "9312:9312/tcp" # Prometheus
+    expose:
+      - "1888/tcp" # Analysis Server (within Docker network)
+      - "5000/tcp" # TXStream
+      #- "8080/tcp" # GoShimmer API
+      #- "8081/tcp" # GoShimmer Dashboard
+      - "9000/tcp" # Analysis Dashboard
+      #- "9312/tcp" # Prometheus
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-v2-proxy
+      # Services
+      - traefik.http.services.goshimmer-dashboard.loadbalancer.server.port=8081
+      - traefik.http.services.goshimmer-webapi.loadbalancer.server.port=8080
+      # Routers
+      - traefik.http.routers.goshimmer-dashboard.service=goshimmer-dashboard
+      - traefik.http.routers.goshimmer-dashboard.rule=Host(`${GOSHIMMER_DASHBOARD_HOSTNAME:?-}`)
+      - traefik.http.routers.goshimmer-dashboard.middlewares=app_redirect
+      - traefik.http.routers.goshimmer-dashboard.entrypoints=websecure
+      - traefik.http.routers.goshimmer-dashboard.tls.certresolver=letsencrypt
+      - traefik.http.routers.goshimmer-webapi.service=goshimmer-webapi
+      - traefik.http.routers.goshimmer-webapi.rule=Host(`${GOSHIMMER_API_HOSTNAME:?-}`)
+      - traefik.http.routers.goshimmer-webapi.middlewares=app_redirect
+      - traefik.http.routers.goshimmer-webapi.entrypoints=websecure
+      - traefik.http.routers.goshimmer-webapi.tls.certresolver=letsencrypt
+      # Middlewares
+      - traefik.http.middlewares.app_redirect.redirectregex.permanent=true
+
+volumes:
+  goshimmer-db:
+    name: goshimmer-db
+  wasp-db:
+    name: wasp-db
+
+networks:
+  traefik-v2-proxy:
+    external: true

@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  traefik:
+    image: traefik:2.5
+    container_name: traefik-v2
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-v2-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/config/traefik.yml:/traefik.yml:ro
+      - ./data/config/dynamic:/config:ro
+      - ./data/dashboard-auth.users:/dashboard-auth.users:ro
+      - ./data/acme.json:/acme.json
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-v2-proxy"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`${TRAEFIK_HOSTNAME:?-}`)"
+      - "traefik.http.routers.traefik-secure.middlewares=dashboard-auth"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.certificatesResolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL:?-}"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.usersfile=/dashboard-auth.users"
+networks:
+  traefik-v2-proxy:
+    external: true
