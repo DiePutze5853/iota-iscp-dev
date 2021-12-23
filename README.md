@@ -91,7 +91,7 @@ iota1qr4fepyj67vunhtdadrmxhfxctewj0362z7qzsfn0x5lult5dv3ucumpf63
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments<br />
 **@Pathin** <br />
-for doing the majority of the work and patiently teaching me lots of stuff I needed to learn.
+for doing the majority of the work while patiently teaching me.
     
 **Support [@Pathin](https://iotamemes.com/user/61ae33c6d2a182ef4a19b85d)**
 iota1qrtfzfeu6rwhe5s8yelvre20lhw8uwcr9nd9e7ugdvhnlw2psseyg8eh0vr
