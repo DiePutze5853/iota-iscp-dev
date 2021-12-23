@@ -3,7 +3,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/DiePutze5853/iota-iscp-dev-preconfigured">
+  <a href="https://github.com/iotaledger/wasp">
     <img src="https://github.com/iotaledger/wasp/raw/master/WASP_logo_dark.png" alt="Logo" width="384" height="256">
   </a>
 
