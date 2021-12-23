@@ -1,13 +1,13 @@
 {
   "goshimmer": {
-    "api": "https://api.goshimmer.sc.iota-defi.com"
+    "api": "https://api.goshimmer.YourDomainName.com"
   },
   "wallet": {
     "seed": "9qznjs2fX4Tequmb8q381uxFti7MkSrVmkCog7H3Zgxs"
   },
   "wasp": {
     "0": {
-      "api": "https://api.wasp.sc.iota-defi.com",
+      "api": "https://api.wasp.sc.YourDomainName.com",
       "nanomsg": "127.0.0.1:5550",
       "peering": "127.0.0.1:4000"
     }
