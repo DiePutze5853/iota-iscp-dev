@@ -1,8 +1,4 @@
 {
-  "chain": "test-evm",
-  "chains": {
-    "test-evm": "nffbW1PXohHFN9iV14VenwTi1gPg7114jejSqyGKmprv"
-  },
   "goshimmer": {
     "api": "https://api.goshimmer.sc.iota-defi.com"
   },
