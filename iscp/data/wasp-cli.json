@@ -1,6 +1,6 @@
 {
   "goshimmer": {
-    "api": "https://api.goshimmer.YourDomainName.com"
+    "api": "https://api.goshimmer.sc.YourDomainName.com"
   },
   "wallet": {
     "seed": "9qznjs2fX4Tequmb8q381uxFti7MkSrVmkCog7H3Zgxs"
