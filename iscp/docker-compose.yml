@@ -1,19 +1,34 @@
 version: "3.4"
 
 services:
-  iota-sc-wasp-devnet:
+  iota_dev_wasp:
     build:
-      context: ./deps/wasp/
-      dockerfile: Dockerfile
-    container_name: iota-sc-wasp-devnet
+      context: .
+      dockerfile: ./docker/wasp/Dockerfile
+    container_name: iota_dev_wasp
+    environment:
+      - WASP_CLI_WASP_API_ADDRESS=iota_dev_wasp:9090
+      - WASP_CLI_WASP_NANOMSG_ADDRESS=127.0.0.1:5550
+      - WASP_CLI_WASP_PEERING_ADDRESS=127.0.0.1:4000
+      - WASP_CLI_GOSHIMER_API_ADDRESS=iota_dev_goshimmer:8080
+      - WASP_CLI_FAUCET_POW_TARGET=-1
+      - USE_EVM=${USE_EVM}
+      - EVM_CHAIN_NAME=${EVM_FLAVOUR}
+      - EVM_CHAIN_DESCRIPTION=EVM-CHAIN
+      - EVM_CHAIN_TOKEN_DEPOSIT=10000
+      - EVM_CHAIN_ALLOC_ADDRESS=${METAMASK_ADRESS:?-}
+      - EVM_CHAIN_ALLOC_TOKENS=1000000000000000000000000
+      - EVM_CHAIN_ID=${EVM_CHAIN_ID:?-}
+      - EVM_FLAVOUR=${EVM_FLAVOUR:?-}
+      - EVM_START_JSONRPC=${START_JSONRPC}
     networks:
       - traefik-v2-proxy
       - default
-    depends_on:
-      - iota-sc-goshimmer-devnet
     volumes:
-      - wasp-db:/wasp/waspdb
-      - ./data/wasp.config.json:/etc/wasp_config.json
+      - wasp:/wasp
+      - ./src:/src
+      - ./deps:/deps
+      - ./data/wasp/wasp.config.json:/etc/wasp_config.json
     expose:
       - "4000/udp" # Peering
       - "5550/tcp" # Nano MSG
@@ -47,54 +62,27 @@ services:
       # Middlewares
       - traefik.http.middlewares.app_redirect.redirectregex.permanent=true
 
-  iota-sc-wasp-cli-devnet:
-    build:
-      context: ./deps/wasp-cli/
-      dockerfile: Dockerfile
-    container_name: iota-sc-wasp-cli-devnet
-    depends_on:
-      - iota-sc-wasp-devnet
+
+  iota_dev_goshimmer:
+    restart: always
+    container_name: iota_dev_goshimmer
     networks:
       - traefik-v2-proxy
       - default
-    volumes:
-      - ./data/wasp-cli.json:/wasp-cli.json
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik-v2-proxy
-      # Services
-      - traefik.http.services.wasp-evm.loadbalancer.server.port=8545
-      # Routers
-      #EVM
-      - traefik.http.routers.wasp-evm.service=wasp-evm
-      - traefik.http.routers.wasp-evm.rule=Host(`${WASP_EVM_HOSTNAME:?-}`)
-      - traefik.http.routers.wasp-evm.middlewares=app_redirect
-      - traefik.http.routers.wasp-evm.entrypoints=websecure
-      - traefik.http.routers.wasp-evm.tls.certresolver=letsencrypt
-
-      # Middlewares
-      - traefik.http.middlewares.app_redirect.redirectregex.permanent=true
-
-  iota-sc-goshimmer-devnet:
-    restart: always
-    container_name: iota-sc-goshimmer-devnet
     image: lukasmoe/goshimmer:wasp-testnet-additions
     stop_grace_period: 1m
-    networks:
-      - traefik-v2-proxy
-      - default
     command: >
       --config=/tmp/config.json
       --database.directory=/tmp/devnetdb
       --mana.snapshotResetTime=true
-      --node.seed=${GOSHIMMER_NODE_SEED:-base64:6ZeFxdcsORkmXWLmkopS20XWQuv0NhXmIyE5LNSMLA8=}
+      --node.seed=base64:B6X+8atnQMtab7K9zbiBL9NzPe8SMzsmLFzpSvKrl6I=
       --messageLayer.snapshot.file=/tmp/snapshot.bin
       --messageLayer.snapshot.genesisNode=
       --messageLayer.startSynced=true
     volumes:
       - goshimmer-db:/tmp/devnetdb
-      - ./data/goshimmer.config.json:/tmp/config.json:ro
-      - ./data/snapshot.bin:/tmp/snapshot.bin:ro
+      - ./data/goshimmer/goshimmer.config.json:/tmp/config.json:ro
+      - ./data/goshimmer/snapshot.bin:/tmp/snapshot.bin:ro
     ports:
       - "5000:5000/tcp" # TX Stream
       #- "8080:8080/tcp" # GoShimmer API
@@ -131,9 +119,9 @@ services:
 volumes:
   goshimmer-db:
     name: goshimmer-db
-  wasp-db:
-    name: wasp-db
+  wasp:
+    name: wasp
 
 networks:
-  traefik-v2-proxy:
+  traefik-v2-proxy: 
     external: true
